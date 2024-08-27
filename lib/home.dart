@@ -1,5 +1,6 @@
-import 'package:contactapp/container_style.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'container_style.dart'; // تأكد من استيراد الـ ContainerStyle
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -9,36 +10,40 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController textController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  String errorMessage = '';
 
   int counter = 0;
-  List<bool> visibilityList = [false, false, false];
   List<ContainerStyle> containers = [];
 
   void addItem() {
     if (counter < 3) {
       setState(() {
-        String name = textController.text;
-        String phone = phoneController.text;
+        if (textController.text.isEmpty || phoneController.text.isEmpty) {
+          errorMessage = 'من فضلك اكتب حاجة في الحقل!';
+        } else {
+          String name = textController.text;
+          String phone = phoneController.text;
 
-        visibilityList[counter] = true;
-        containers.add(ContainerStyle(name: name, phone: phone));
+          int currentIndex = containers.length - 1;
 
-        counter++;
-
-        textController.clear();
-        phoneController.clear();
+          containers.add(ContainerStyle(
+            name: name,
+            phone: phone,
+            remove: () => removeItem(currentIndex),
+          ));
+          counter++;
+          textController.clear();
+          phoneController.clear();
+        }
       });
     }
   }
 
-  void removeItem() {
-    if (counter > 0) {
-      setState(() {
-        counter--;
-        visibilityList[counter] = false;
-        containers.removeLast();
-      });
-    }
+  void removeItem(int index) {
+    setState(() {
+      containers.removeAt(index);
+      counter--;
+    });
   }
 
   @override
@@ -52,77 +57,85 @@ class _MyHomePageState extends State<MyHomePage> {
             TextField(
               controller: textController,
               decoration: InputDecoration(
-                  labelText: 'Enter Your Name Here',
-                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                  filled: true,
-                  fillColor: Colors.white,
-                  suffixIcon: Icon(Icons.edit),
-                  suffixIconColor: Color(0xff2195F1),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(50))),
+                labelText: 'Enter Your Name Here',
+                errorText: errorMessage.isNotEmpty ? errorMessage : null,
+                labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                filled: true,
+                fillColor: Colors.white,
+                suffixIcon: Icon(Icons.edit),
+                suffixIconColor: Color(0xff2195F1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              onChanged: (text) {
+                setState(() {
+                  errorMessage = '';
+                });
+              },
             ),
             SizedBox(height: 20),
             TextField(
               controller: phoneController,
               decoration: InputDecoration(
-                  labelText: 'Enter Your Phone Here',
-                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                  filled: true,
-                  fillColor: Colors.white,
-                  suffixIcon: Icon(Icons.phone),
-                  suffixIconColor: Color(0xff2195F1),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(50))),
+                labelText: 'Enter Your Phone Here',
+                errorText: errorMessage.isNotEmpty ? errorMessage : null,
+                labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                filled: true,
+                fillColor: Colors.white,
+                suffixIcon: Icon(Icons.phone),
+                suffixIconColor: Color(0xff2195F1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              onChanged: (text) {
+                setState(() {
+                  errorMessage = '';
+                });
+              },
             ),
             SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(Colors.blue),
-                    ),
-                    onPressed: addItem,
-                    child: Text(
-                      'Add',
-                      style: TextStyle(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 1,
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all<Color>(Colors.blue),
+                      ),
+                      onPressed: addItem,
+                      child: Text(
+                        'Add',
+                        style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
-                          fontSize: 20),
+                          fontSize: 20,
+                        ),
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(width: 3),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(Colors.red),
-                    ),
-                    onPressed: removeItem,
-                    child: Text(
-                      'Delete',
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20),
-                    ),
-                  ),
-                ),
               ],
             ),
             SizedBox(height: 20),
             Column(
-              children: containers.map((container) {
+              children: List.generate(containers.length, (index) {
                 return Column(
                   children: [
-                    container,
+                    ContainerStyle(
+                      name: containers[index].name,
+                      phone: containers[index].phone,
+                      remove: () => removeItem(index),
+                    ),
                     SizedBox(height: 20),
                   ],
                 );
-              }).toList(),
+              }),
             ),
           ],
         ),
